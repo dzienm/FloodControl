@@ -23,212 +23,235 @@ import myBox.AlertBox;
 
 public class FloodControl {
 
-	private GameAnimationTimer animationTimer;
-	private Stage stage;
-	private Image playingPieces;
-	private Image backgroundScreen;
-	private Image titleScreen;
-	private Image titleIcon;
+    private GameAnimationTimer animationTimer;
+    private Stage stage;
+    private Image playingPieces;
+    private Image backgroundScreen;
+    private Image titleScreen;
+    private Image titleIcon;
 
-	private Group gameGroup;
-	private Canvas gameCanvas;
-	private GraphicsContext gameGraphicsContext;
-	private Scene gameScene;
+    private Group gameGroup;
+    private Canvas gameCanvas;
+    private GraphicsContext gameGraphicsContext;
+    private Scene gameScene;
 
-	private State gameState;
+    private State gameState;
 
-	private Point2D boardOrigin;
-	private GameBoard gameBoard;
+    private Point2D boardOrigin;
+    private GameBoard gameBoard;
 
-	private UserInputQueue userInputQueue;
+    private Rectangle2D[][] gameBoardRect; //czy mozna tego uniknac i zrobic zmienna lokalna??
 
-	public FloodControl(Stage primaryStage) {
-		stage = primaryStage;
-		stage.setTitle("Flood Control");
+    private UserInputQueue userInputQueue;
 
-	}
+    public FloodControl(Stage primaryStage) {
+        stage = primaryStage;
+        stage.setTitle("Flood Control");
 
-	public void run() {
-		loadContent(); // jak sie zrobi odwrotnie to rysunki nie sa zaladowane i
-						// aplikacja sie wysypuje
-		initialize();
+    }
 
-		stage.show();
-		animationTimer = new GameAnimationTimer();
-		animationTimer.start();
-	}
+    public void run() {
+        loadContent(); // jak sie zrobi odwrotnie to rysunki nie sa zaladowane i
+        // aplikacja sie wysypuje
+        initialize();
 
-	private void loadContent() {
-		playingPieces = new Image("textures/Tile_Sheet.png"); // nazwa katalogu
-																// content jest
-																// jakas
-																// kluczowa w
-																// eclipse?
-		backgroundScreen = new Image("textures/Background.png");
-		titleScreen = new Image("textures/TitleScreen.png");
-		titleIcon = new Image("icons/Game.png");
-	}
+        stage.show();
+        animationTimer = new GameAnimationTimer();
+        animationTimer.start();
+    }
 
-	private void initialize() {
+    private void loadContent() {
+        playingPieces = new Image("textures/Tile_Sheet.png"); // nazwa katalogu
+        // content jest
+        // jakas
+        // kluczowa w
+        // eclipse?
+        backgroundScreen = new Image("textures/Background.png");
+        titleScreen = new Image("textures/TitleScreen.png");
+        titleIcon = new Image("icons/Game.png");
+    }
 
-		gameState = State.TitleScreen;
+    private void initialize() {
 
-		gameGroup = new Group();
-		gameCanvas = new Canvas(800, 600);
-		gameGroup.getChildren().add(gameCanvas);
+        gameState = State.TitleScreen;
 
-		gameGraphicsContext = gameCanvas.getGraphicsContext2D();
+        gameGroup = new Group();
+        gameCanvas = new Canvas(800, 600);
+        gameGroup.getChildren().add(gameCanvas);
 
-		gameScene = new Scene(gameGroup);
-		stage.setScene(gameScene);
+        gameGraphicsContext = gameCanvas.getGraphicsContext2D();
 
-		userInputQueue = new UserInputQueue();
-		gameScene.setOnKeyPressed(keyEvent -> userInputQueue.addKey(keyEvent));
-		gameScene.setOnMouseClicked(mouseEv -> userInputQueue.addMouse(mouseEv));
+        gameScene = new Scene(gameGroup);
+        stage.setScene(gameScene);
 
-		boardOrigin = new Point2D(70, 89);
-		gameBoard = new GameBoard();
-		gameBoard.generateNewPieces();
+        userInputQueue = new UserInputQueue();
+        gameScene.setOnKeyPressed(keyEvent -> userInputQueue.addKey(keyEvent));
+        gameScene.setOnMouseClicked(mouseEv -> userInputQueue.addMouse(mouseEv));
 
-		// stage.setAlwaysOnTop(true);
-		// stage.initModality(Modality.APPLICATION_MODAL);
-		stage.setIconified(true);
-		stage.getIcons().add(titleIcon);
-		stage.setOnCloseRequest(e -> stage_CloseRequest(e));
-		stage.setResizable(false);
-	}
+        boardOrigin = new Point2D(70, 89);
+        gameBoard = new GameBoard();
+        gameBoard.generateNewPieces();
+        gameBoardRect = new Rectangle2D[GameBoard.GAME_BOARD_WIDTH][GameBoard.GAME_BOARD_HEIGHT];
 
-	private void stage_CloseRequest(WindowEvent windowEvent) {
+        initiGameBoardRect();
 
-		// prosty sposob zamykania okna - ciekawe co psuje???s
-		// if (AlertBox.showAndWait(AlertType.CONFIRMATION, "Flood Control", "Do
-		// you want to stop the game?")
-		// .orElse(ButtonType.CANCEL) == ButtonType.OK) {
-		// animationTimer.stop();
-		// unloadContent();
-		// stage.close();
-		// }
+        // stage.setAlwaysOnTop(true);
+        // stage.initModality(Modality.APPLICATION_MODAL);
+        stage.setIconified(true);
+        stage.getIcons().add(titleIcon);
+        stage.setOnCloseRequest(e -> stage_CloseRequest(e));
+        stage.setResizable(false);
+    }
 
-		// dlaczego runLater ??? - oryginalnie taki jest
-		windowEvent.consume();
+    private void initiGameBoardRect() {
+        for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
+            for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
+                double pixelX = boardOrigin.getX();
+                double pixelY = boardOrigin.getY();
 
-		Platform.runLater(new Runnable() {
-			@Override
-			public void run() {
-				if (AlertBox.showAndWait(AlertType.CONFIRMATION, "Flood Control", "Do you want to stop the game?")
-						.orElse(ButtonType.CANCEL) == ButtonType.OK) {
-					animationTimer.stop();
-					unloadContent();
-					stage.close();
-				}
-			}
-		});
-	}
+                pixelX += x * GamePiece.pieceWidth;
+                pixelY += y * GamePiece.pieceHeight;
 
-	private void unloadContent() {
-	}
+                gameBoardRect[x][y] = new Rectangle2D((int) pixelX,
+                        (int) pixelY,
+                        GamePiece.pieceWidth,
+                        GamePiece.pieceHeight);
+            }
+        }
 
-	private void update(long currentNanoTime) {
+    }
 
-		// mozna bylo z throws NullPointerException i zrobic catch
+    private void stage_CloseRequest(WindowEvent windowEvent) {
 
-		KeyCode keyCode = userInputQueue.getKeyCode();
-		MouseEvent mouseEv = userInputQueue.getMouse();
-		
-		switch (gameState) {
-		case TitleScreen:
-			if (keyCode == KeyCode.SPACE) {
-				gameState = State.Playing;
-				gameBoard.generateNewPieces();
-			} else if (keyCode == KeyCode.ESCAPE) {
-				stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
-			}
-			break;
-		case Playing:
-			
-			if (keyCode == KeyCode.ESCAPE) {
-				stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
-			}
-			
-			if (mouseEv!=null&&mouseEv.getButton() == MouseButton.PRIMARY) {
-			
-				double mouseX = mouseEv.getSceneX();
-				double mouseY = mouseEv.getSceneY();
+        // prosty sposob zamykania okna - ciekawe co psuje???s
+        // if (AlertBox.showAndWait(AlertType.CONFIRMATION, "Flood Control", "Do
+        // you want to stop the game?")
+        // .orElse(ButtonType.CANCEL) == ButtonType.OK) {
+        // animationTimer.stop();
+        // unloadContent();
+        // stage.close();
+        // }
 
-				for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
-					for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
-						double pixelX = boardOrigin.getX();
-						double pixelY = boardOrigin.getY();
+        // dlaczego runLater ??? - oryginalnie taki jest
+        windowEvent.consume();
 
-						pixelX += x * GamePiece.pieceWidth;
-						pixelY += y * GamePiece.pieceHeight;
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                if (AlertBox.showAndWait(AlertType.CONFIRMATION, "Flood Control", "Do you want to stop the game?")
+                        .orElse(ButtonType.CANCEL) == ButtonType.OK) {
+                    animationTimer.stop();
+                    unloadContent();
+                    stage.close();
+                }
+            }
+        });
+    }
 
-						Rectangle2D rectPiece = new Rectangle2D(pixelX, pixelY, GamePiece.pieceWidth,
-								GamePiece.pieceHeight);
-						if (rectPiece.contains(new Point2D(mouseX, mouseY))) {
-							if (mouseEv.isPrimaryButtonDown()) {
-								gameBoard.rotatePiece(x, y, true);
-							}
-						}
-					}
-				
-			}
-			}
-			
-			break;
-		}
+    private void unloadContent() {
+    }
 
-	}
+    private void update(long currentNanoTime) {
 
-	private void draw(long currentNanoTime) {
-		gameGraphicsContext.clearRect(0, 0, 800, 600);
+        // mozna bylo z throws NullPointerException i zrobic catch ale to bardzo obciaza system (ktos kiedys stracil prace przez naduzywanie)
 
-		switch (gameState) {
-		case TitleScreen:
-			gameGraphicsContext.drawImage(titleScreen, 0, 0);
-			break;
+        KeyCode keyCode = userInputQueue.getKeyCode();
+        MouseEvent mouseEv = userInputQueue.getMouse();
 
-		case Playing:
-			gameGraphicsContext.drawImage(backgroundScreen, 0, 0);
+        switch (gameState) {
+            case TitleScreen:
+                if (keyCode == KeyCode.SPACE) {
+                    gameState = State.Playing;
+                    gameBoard.generateNewPieces();
+                } else if (keyCode == KeyCode.ESCAPE) {
+                    stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                }
+                break;
+            case Playing:
 
-			for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
-				for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
-					double pixelX = boardOrigin.getX();
-					double pixelY = boardOrigin.getY();
+                if (keyCode == KeyCode.ESCAPE) {
+                    stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                }
 
-					pixelX += x * GamePiece.pieceWidth;
-					pixelY += y * GamePiece.pieceHeight;
+                if (mouseEv != null && (mouseEv.getButton() == MouseButton.PRIMARY || mouseEv.getButton() == MouseButton.SECONDARY)) {
 
-					PixelReader pixReader = playingPieces.getPixelReader();
-					WritableImage emptyPiece = new WritableImage(pixReader, 1, 247, GamePiece.pieceWidth,
-							GamePiece.pieceHeight);
-					gameGraphicsContext.drawImage(emptyPiece, pixelX, pixelY);
-					WritableImage actualPiece = new WritableImage(pixReader,
-							(int) gameBoard.getSourceRect(x, y).getMinX(),
-							(int) gameBoard.getSourceRect(x, y).getMinY(),
-							(int) gameBoard.getSourceRect(x, y).getWidth(),
-							(int) gameBoard.getSourceRect(x, y).getHeight());
-					gameGraphicsContext.drawImage(actualPiece, pixelX, pixelY);
-				}
-			}
-			break;
+                    double mouseX = mouseEv.getSceneX();
+                    double mouseY = mouseEv.getSceneY();
 
-		}
+                    for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
+                        for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
 
-	}
+                            if (gameBoardRect[x][y].contains(new Point2D(mouseX, mouseY))) {
 
-	private class GameAnimationTimer extends AnimationTimer {
+                                if (mouseEv.getButton() == MouseButton.PRIMARY) {
+                                    gameBoard.rotatePiece(x, y, true);
+                                }
 
-		@Override
-		public void handle(long currentNanoTime) {
-			update(currentNanoTime);// aktualizacja stanu gry
-			draw(currentNanoTime);// aktualizacja widoku
-		}
+                                if (mouseEv.getButton() == MouseButton.SECONDARY) {
+                                    gameBoard.rotatePiece(x, y, false);
+                                }
+                            }
+                        }
 
-	}
+                    }
+                }
 
-	private enum State {
-		TitleScreen, Playing;
-	}
+                break;
+        }
+
+    }
+
+    private void draw(long currentNanoTime) {
+        gameGraphicsContext.clearRect(0, 0, 800, 600);
+
+        switch (gameState) {
+            case TitleScreen:
+                gameGraphicsContext.drawImage(titleScreen, 0, 0);
+                break;
+
+            case Playing:
+                gameGraphicsContext.drawImage(backgroundScreen, 0, 0);
+
+                for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
+                    for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
+                        double pixelX = boardOrigin.getX();
+                        double pixelY = boardOrigin.getY();
+
+                        pixelX += x * GamePiece.pieceWidth;
+                        pixelY += y * GamePiece.pieceHeight;
+
+                        PixelReader pixReader = playingPieces.getPixelReader();
+                        WritableImage emptyPiece = new WritableImage(pixReader, 1, 247, GamePiece.pieceWidth,
+                                GamePiece.pieceHeight);
+                        gameGraphicsContext.drawImage(emptyPiece, pixelX, pixelY);
+                        WritableImage actualPiece = new WritableImage(pixReader,
+                                (int) gameBoard.getSourceRect(x, y).getMinX(),
+                                (int) gameBoard.getSourceRect(x, y).getMinY(),
+                                (int) gameBoard.getSourceRect(x, y).getWidth(),
+                                (int) gameBoard.getSourceRect(x, y).getHeight());
+                        gameGraphicsContext.drawImage(actualPiece, pixelX, pixelY);
+
+
+                    }
+                }
+                break;
+
+        }
+
+    }
+
+    private class GameAnimationTimer extends AnimationTimer {
+
+        @Override
+        public void handle(long currentNanoTime) {
+            update(currentNanoTime);// aktualizacja stanu gry
+            draw(currentNanoTime);// aktualizacja widoku
+        }
+
+    }
+
+    private enum State {
+        TitleScreen, Playing;
+    }
 
 }

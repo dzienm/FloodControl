@@ -40,6 +40,8 @@ public class GamePiece {
 
 	public void setPieceByIndex(int ix, String suffix) {
 
+		this.pieceType = pieceTypes[ix];
+		this.pieceSuffix = suffix;
 	}
 
 	public void rotatePiece(boolean isClockwise) {
@@ -54,12 +56,13 @@ public class GamePiece {
 		else if (ix >= 2 && ix < emptyPieceIndex) {
 
 			if (isClockwise) {
-				newIx = 2 + ((ix - 2) + 1) % 4;
+				newIx = ix > 2 ? (ix - 1) : 5;
+
 			}
 
 			else {
 
-				newIx = ix > 2 ? (ix - 1) : 5;
+				newIx = 2 + ((ix - 2) + 1) % 4;
 			}
 		}
 
