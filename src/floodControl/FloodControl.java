@@ -21,6 +21,8 @@ import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import myBox.AlertBox;
 
+import java.util.ArrayList;
+
 public class FloodControl {
 
     private GameAnimationTimer animationTimer;
@@ -93,7 +95,7 @@ public class FloodControl {
         gameBoard.generateNewPieces();
         gameBoardRect = new Rectangle2D[GameBoard.GAME_BOARD_WIDTH][GameBoard.GAME_BOARD_HEIGHT];
 
-        initiGameBoardRect();
+        initGameBoardRect();
 
         // stage.setAlwaysOnTop(true);
         // stage.initModality(Modality.APPLICATION_MODAL);
@@ -103,7 +105,7 @@ public class FloodControl {
         stage.setResizable(false);
     }
 
-    private void initiGameBoardRect() {
+    private void initGameBoardRect() {
         for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
             for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
                 double pixelX = boardOrigin.getX();
@@ -171,6 +173,16 @@ public class FloodControl {
 
                 if (keyCode == KeyCode.ESCAPE) {
                     stage.fireEvent(new WindowEvent(stage, WindowEvent.WINDOW_CLOSE_REQUEST));
+                }
+
+                for (int y = 0; y < GameBoard.GAME_BOARD_HEIGHT; ++y) {
+                    for (int x = 0; x < GameBoard.GAME_BOARD_WIDTH; ++x) {
+
+                        ArrayList<GamePiece> pieceNeighbors = gameBoard.getNeighbors(x,y);
+                        int test = 5;
+
+                    }
+
                 }
 
                 if (mouseEv != null && (mouseEv.getButton() == MouseButton.PRIMARY || mouseEv.getButton() == MouseButton.SECONDARY)) {

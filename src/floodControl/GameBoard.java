@@ -1,5 +1,6 @@
 package floodControl;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 import javafx.geometry.Rectangle2D;
@@ -53,5 +54,98 @@ public class GameBoard {
 			}
 		}
 	}
-	
+
+	public ArrayList<GamePiece> getNeighbors(int x, int y){
+
+		ArrayList<GamePiece> neighbors = new ArrayList<>();
+
+		//troche brzydkie ale trudno
+		switch (x){
+			case 0:
+				neighbors.add(new GamePiece("Left,Right","W"));
+				neighbors.add((boardSquares[x+1][y]));
+				switch (y){
+					case 0:
+						neighbors.add(new GamePiece("Empty","N"));
+						neighbors.add(boardSquares[x][y+1]);
+						break;
+					case GAME_BOARD_HEIGHT - 1:
+						neighbors.add(new GamePiece("Empty","N"));
+						neighbors.add(boardSquares[x][y+1]);
+					default:
+						neighbors.add(boardSquares[x][y-1]);
+						neighbors.add(boardSquares[x][y+1]);
+						break;
+				}
+				break;
+			case  GAME_BOARD_WIDTH - 1:
+				neighbors.add(new GamePiece("Left,Right","E"));
+				neighbors.add((boardSquares[x-1][y]));
+				switch (y){
+					case 0:
+						neighbors.add(new GamePiece("Empty","N"));
+						neighbors.add(boardSquares[x][y+1]);
+						break;
+					case GAME_BOARD_HEIGHT - 1:
+						neighbors.add(new GamePiece("Empty","N"));
+						neighbors.add(boardSquares[x][y+1]);
+					default:
+						neighbors.add(boardSquares[x][y-1]);
+						neighbors.add(boardSquares[x][y+1]);
+						break;
+				}
+			default:
+				neighbors.add((boardSquares[x-1][y]));
+				neighbors.add((boardSquares[x+1][y]));
+				switch (y){
+					case 0:
+						neighbors.add(new GamePiece("Empty","N"));
+						neighbors.add(boardSquares[x][y+1]);
+						break;
+					case GAME_BOARD_HEIGHT - 1:
+						neighbors.add(new GamePiece("Empty","N"));
+						neighbors.add(boardSquares[x][y+1]);
+					default:
+						neighbors.add(boardSquares[x][y-1]);
+						neighbors.add(boardSquares[x][y+1]);
+						break;
+				}
+				break;
+		}
+
+		return neighbors;
+	}
+
+//	private class PiecesNeighborhood{
+//
+//		private GamePiece topNeighbor;
+//		private GamePiece bottomNeighbor;
+//		private GamePiece rightNeighbor;
+//		private GamePiece leftNeighbor;
+//
+//		public PiecesNeighborhood(){
+//
+//			topNeighbor = new GamePiece("Empty","N");
+//			bottomNeighbor = new GamePiece("Empty","N");
+//			leftNeighbor = new GamePiece("Empty","N");
+//			rightNeighbor = new GamePiece("Empty","N");
+//		}
+//
+//		public void setTopNeighbor(GamePiece NeighborPiece){
+//			topNeighbor = NeighborPiece;
+//		}
+//
+//		public void setBottomNeighbor(GamePiece NeighborPiece){
+//			bottomNeighbor = NeighborPiece;
+//		}
+//
+//		public void setLeftNeighbor(GamePiece NeighborPiece){
+//			leftNeighbor = NeighborPiece;
+//		}
+//
+//		public void setRightNeighbor(GamePiece NeighborPiece){
+//			rightNeighbor = NeighborPiece;
+//		}
+//
+//	}
 }

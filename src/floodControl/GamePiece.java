@@ -95,4 +95,12 @@ public class GamePiece {
 		return new Rectangle2D(x, y, pieceWidth, pieceHeight);
 	}
 
+	public void setPieceSuffix(String suffix){
+		this.pieceSuffix = suffix;
+	}
+
+	public boolean hasConnector(String direction){
+		return this.pieceType.contains(direction);
+	}
+
 }
